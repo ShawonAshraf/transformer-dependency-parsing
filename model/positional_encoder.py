@@ -1,5 +1,5 @@
 import jax
-import jax.numpy as jnp
+import numpy as jnp
 import flax
 import flax.linen as nn
 from einops import rearrange
@@ -7,7 +7,7 @@ from einops import rearrange
 
 class PositionalEncoding(nn.Module):
     d_model: int
-    dropout_prob: float = 0.1
+    dropout_rate: float = 0.1
     max_len: int = 150
 
     def setup(self) -> None:
@@ -35,8 +35,26 @@ class PositionalEncoding(nn.Module):
         self.pe = jax.device_put(pe)
 
         # dropout
-        self.dropout = nn.Dropout(self.dropout_prob)
+        self.dropout = nn.Dropout(self.dropout_rate)
 
-    def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
+    # so in flax
+    # dropout is deterministic if a fixed value is always applied
+    # otherwise the dropout_prob has to be a rng
+    # https://flax.readthedocs.io/en/latest/api_reference/flax.errors.html#flax.errors.InvalidRngError
+    def __call__(self, x: jnp.ndarray, deterministic=True) -> jnp.ndarray:
         x = x + self.pe[:x.shape[0]]
-        return self.dropout(x)
+        return self.dropout(x, deterministic=deterministic)
+
+
+if __name__ == "__main__":
+    rng = jax.random.PRNGKey(0)
+
+    rng, sub = jax.random.split(rng)
+
+    dummy = jax.random.normal(rng, shape=(100, 1))
+
+    pe = PositionalEncoding(d_model=512)
+    params = pe.init(rng, dummy)
+
+    y = pe.apply(params, dummy)
+    print(y)
