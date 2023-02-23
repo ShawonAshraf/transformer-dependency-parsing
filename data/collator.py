@@ -15,11 +15,6 @@ from torch._six import string_classes
 """
 
 
-# dataset returns and instace as a dict
-def data_collator(batch):
-    pass
-
-
 np_str_obj_array_pattern = re.compile(r'[SaUO]')
 
 default_collate_err_msg_format = (
