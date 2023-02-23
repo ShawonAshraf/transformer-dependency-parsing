@@ -1,7 +1,6 @@
 from typing import Tuple
 
-import jax
-import jax.numpy as jnp
+import numpy as jnp
 import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
