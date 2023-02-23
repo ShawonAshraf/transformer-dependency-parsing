@@ -4,47 +4,27 @@ import flax
 import flax.linen as nn
 from einops import rearrange
 
+from .positional_encoder import PositionalEncoding
 
-class PositionalEncoding(nn.Module):
+
+class Transformer(nn.Module):
+    vocab_size: int
     d_model: int
-    dropout_prob: float = 0.1
-    max_len: int = 150
+    n_heads: int
+    n_encoder_layers: int
+    n_decoder_layers: int
+    dropout_prob: float
+    max_len: int
+    n_tags: int
 
     def setup(self) -> None:
-        positions = jnp.arange(0, self.max_len)
-        # vectorise
-        positions = rearrange(positions, "n -> n 1")
-
-        # but in log space
-        # -2i * n / d
-        # even steps , since 2i
-        # n = 10e3
-        denominator = -jnp.arange(0, self.d_model, 2) * jnp.log(jnp.array(10.0e3)) / self.d_model
-        # exp since we took log from the original equation, which was 1/n^(2i / d)
-        denominator = jnp.exp(denominator)
-
-        # positional encoding tensor
-        pe = jnp.zeros(shape=(self.max_len, 1, self.d_model))
-        # encode the first dim
-        pe[:, 0, 0::2] = jnp.sin(positions * denominator)
-        # second dim
-        pe[:, 0, 1::2] = jnp.cos(positions * denominator)
-
-        # similar to torch buffer
-        # https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/JAX/tutorial6/Transformers_and_MHAttention.html#Positional-encoding
-        self.pe = jax.device_put(pe)
-
-        # dropout
+        # https://flax.readthedocs.io/en/latest/api_reference/_autosummary/flax.linen.Embed.html
+        self.embedding = nn.Embed(num_embeddings=self.vocab_size, features=self.d_model)
+        self.positional_encoder = PositionalEncoding(d_model=self.d_model, max_len=self.max_len)
         self.dropout = nn.Dropout(self.dropout_prob)
 
+        # transfomer
+        self.transformer = None
+
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
-        x = x + self.pe[:x.shape[0]]
-        return self.dropout(x)
-
-
-class ParserTransformer(nn.Module):
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
-        # positions = self.
         pass
