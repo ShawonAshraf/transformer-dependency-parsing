@@ -56,13 +56,15 @@ class Conll06Dataset(Dataset):
         self.vocab = {}
 
         word_set = set()
-        # add a OOV token
-        word_set.add("<OOV>")
 
         for _, sentence in tqdm(enumerate(self.sentences), desc="init vocab"):
             token_forms = [token.form for token in sentence.tokens]
             for tf in token_forms:
                 word_set.add(tf)
+
+        # add a OOV and PAD token in the end to avoid collision with token indices
+        word_set.add("<OOV>")
+        word_set.add("<PAD>")
 
         # set contains the word forms
         # convert to integers
@@ -89,7 +91,9 @@ class Conll06Dataset(Dataset):
     def __encode_sentence(self, sentence: Sentence) -> jnp.ndarray:
         # right padding
         # encoded will be populated from left to right
-        encoded = jnp.zeros(shape=(self.MAX_LEN, ), dtype=jnp.float32)
+        # start with all elements as padded
+        # edit them afterwards
+        encoded = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * self.vocab["<PAD>"]
 
         for idx, token in enumerate(sentence.tokens):
             if token.form in self.vocab.keys():
@@ -101,8 +105,9 @@ class Conll06Dataset(Dataset):
 
     # encode labels and get head
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[jnp.ndarray, jnp.ndarray]:
-        heads = jnp.ones(shape=(self.MAX_LEN, ), dtype=jnp.float32) * -1.0
-        rels = jnp.ones(shape=(self.MAX_LEN, ), dtype=jnp.float32) * -1.0
+        # -1.0 is used as padding here
+        heads = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * -1.0
+        rels = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * -1.0
 
         for idx, token in enumerate(sentence.tokens):
             heads[idx] = token.head
