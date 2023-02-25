@@ -1,5 +1,5 @@
 import jax
-import numpy as jnp
+import jax.numpy as jnp
 import flax
 import flax.linen as nn
 from einops import rearrange
@@ -26,9 +26,9 @@ class PositionalEncoding(nn.Module):
         # positional encoding tensor
         pe = jnp.zeros(shape=(self.max_len, 1, self.d_model))
         # encode the first dim
-        pe[:, 0, 0::2] = jnp.sin(positions * denominator)
+        pe.at[:, 0, 0::2].set(jnp.sin(positions * denominator))
         # second dim
-        pe[:, 0, 1::2] = jnp.cos(positions * denominator)
+        pe.at[:, 0, 1::2].set(jnp.cos(positions * denominator))
 
         # similar to torch buffer
         # https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/JAX/tutorial6/Transformers_and_MHAttention.html#Positional-encoding
@@ -57,4 +57,5 @@ if __name__ == "__main__":
     params = pe.init(rng, dummy)
 
     y = pe.apply(params, dummy)
+    print(type(y))
     print(y)
