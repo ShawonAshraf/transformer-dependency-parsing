@@ -15,5 +15,5 @@ if __name__ == "__main__":
     
     for td in train_loader:
         print(type(td["heads"]))
-        break
+        # break
     

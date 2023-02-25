@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import jax.numpy as jnp
+import numpy as jnp
 import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
@@ -93,9 +93,9 @@ class Conll06Dataset(Dataset):
 
         for idx, token in enumerate(sentence.tokens):
             if token.form in self.vocab.keys():
-                encoded.at[idx].set(self.vocab[token.form])
+                encoded[idx] = self.vocab[token.form]
             else:
-                encoded.at[idx].set(self.vocab["<OOV>"])
+                encoded[idx] = self.vocab["<OOV>"]
 
         return encoded
 
@@ -105,7 +105,7 @@ class Conll06Dataset(Dataset):
         rels = jnp.ones(shape=(self.MAX_LEN, ), dtype=jnp.float32) * -1.0
 
         for idx, token in enumerate(sentence.tokens):
-            heads.at[idx].set(token.head)
-            rels.at[idx].set(self.rel_dict[token.rel])
+            heads[idx] = token.head
+            rels[idx] = self.rel_dict[token.rel]
 
         return heads, rels
