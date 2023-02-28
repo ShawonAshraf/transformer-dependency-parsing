@@ -9,7 +9,8 @@ import torch.optim as optim
 class ParserTransformer(pl.LightningModule):
     def __init__(self, lr: float,
                  parser_heads: int,
-                 parser_rels: int) -> None:
+                 parser_rels: int,
+                 ignore_idx: int) -> None:
         super().__init__()
 
         self.lr = lr
@@ -17,6 +18,7 @@ class ParserTransformer(pl.LightningModule):
 
         self.parser_heads = parser_heads
         self.parser_rels = parser_rels
+        self.ignore_idx = ignore_idx
 
         self.distil_bert = AutoModel.from_pretrained("microsoft/xtremedistil-l6-h384-uncased")
 
@@ -36,7 +38,8 @@ class ParserTransformer(pl.LightningModule):
         rel_logits = self.rel_labeler(out)
         rel_logits = F.relu(rel_logits)
 
-        return self.dropout(head_logits), self.dropout(rel_logits)
+        return F.log_softmax(self.dropout(head_logits)), \
+            F.log_softmax(self.dropout(rel_logits))
 
     def configure_optimizers(self):
         return optim.Adam(lr=self.lr, params=self.parameters())
@@ -49,7 +52,8 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.nll_loss(head_logits, heads) + F.cross_entropy(rel_logits, rels)
+        loss = F.nll_loss(head_logits, heads, ignore_index=self.ignore_idx) + \
+               F.nll_loss(rel_logits, rels, ignore_index=self.ignore_idx)
 
         return {
             "loss": loss,
@@ -66,7 +70,8 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.cross_entropy(head_logits, heads) + F.cross_entropy(rel_logits, rels)
+        loss = F.nll_loss(head_logits, heads, ignore_index=self.ignore_idx) + \
+               F.nll_loss(rel_logits, rels, ignore_index=self.ignore_idx)
 
         return {
             "loss": loss,

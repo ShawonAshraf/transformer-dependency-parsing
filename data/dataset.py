@@ -25,6 +25,7 @@ class Conll06Dataset(Dataset):
         # for label
         self.rel_dict = {}
         self.__build_rel_dict()
+        self.pad_idx = self.rel_dict["<PAD>"]
 
     def __len__(self) -> int:
         return len(self.sentences)
@@ -66,6 +67,9 @@ class Conll06Dataset(Dataset):
             for rel in rels:
                 rel_set.add(rel)
 
+        # add <PAD>
+        rel_set.add("<PAD>")
+
         # map to int
         for idx, rel in tqdm(enumerate(rel_set), desc="mapping rel to int"):
             if rel not in self.rel_dict.keys():
@@ -74,8 +78,8 @@ class Conll06Dataset(Dataset):
     # encode labels and get head
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
         # -1.0 is used as padding here
-        heads = torch.ones((self.MAX_LEN,)) * -1.0
-        rels = torch.ones((self.MAX_LEN,)) * -1.0
+        heads = torch.ones((self.MAX_LEN,)) * self.pad_idx
+        rels = torch.ones((self.MAX_LEN,)) * self.pad_idx
 
         for idx, token in enumerate(sentence.tokens):
             heads[idx] = token.head
