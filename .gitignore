@@ -2,3 +2,4 @@ venv/
 .code/
 .idea/
 __pycache__/
+lightning_logs/
