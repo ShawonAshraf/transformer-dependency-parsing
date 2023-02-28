@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import numpy as jnp
+
 import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
@@ -88,12 +88,12 @@ class Conll06Dataset(Dataset):
 
     # encode word forms of the tokens from a sentence
     # also pad them for vectorisation
-    def __encode_sentence(self, sentence: Sentence) -> jnp.ndarray:
+    def __encode_sentence(self, sentence: Sentence) -> torch.Tensor:
         # right padding
         # encoded will be populated from left to right
         # start with all elements as padded
         # edit them afterwards
-        encoded = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * self.vocab["<PAD>"]
+        encoded = torch.ones((self.MAX_LEN, )) * self.vocab["<PAD>"]
 
         for idx, token in enumerate(sentence.tokens):
             if token.form in self.vocab.keys():
@@ -104,10 +104,10 @@ class Conll06Dataset(Dataset):
         return encoded
 
     # encode labels and get head
-    def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
         # -1.0 is used as padding here
-        heads = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * -1.0
-        rels = jnp.ones(shape=(self.MAX_LEN,), dtype=jnp.float32) * -1.0
+        heads = torch.ones((self.MAX_LEN, )) * -1.0
+        rels = torch.ones((self.MAX_LEN, )) * -1.0
 
         for idx, token in enumerate(sentence.tokens):
             heads[idx] = token.head
