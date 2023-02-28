@@ -18,10 +18,10 @@ class ParserTransformer(pl.LightningModule):
         self.parser_heads = parser_heads
         self.parser_rels = parser_rels
 
-        self.distil_bert = AutoModel.from_pretrained("distilbert-base-cased")
+        self.distil_bert = AutoModel.from_pretrained("microsoft/xtremedistil-l6-h384-uncased")
 
-        self.head_labeler = nn.Linear(768, self.parser_heads)
-        self.rel_labeler = nn.Linear(768, self.parser_rels)
+        self.head_labeler = nn.Linear(384, self.parser_heads)
+        self.rel_labeler = nn.Linear(384, self.parser_rels)
         self.dropout = nn.Dropout(0.1)
 
         self.log_softmax = nn.LogSoftmax(dim=-1)
