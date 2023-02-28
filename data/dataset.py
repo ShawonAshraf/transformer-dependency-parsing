@@ -52,8 +52,8 @@ class Conll06Dataset(Dataset):
         return {
             "input_ids": encoded_sentence["input_ids"].flatten(),
             "attention_mask": encoded_sentence["attention_mask"].flatten(),
-            "heads": heads,
-            "rels": rels
+            "heads": heads.reshape(1, -1),
+            "rels": rels.reshape(1, -1)
         }
 
     # ============ preprocessing methods ===========

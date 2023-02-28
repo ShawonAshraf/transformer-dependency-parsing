@@ -38,8 +38,8 @@ class ParserTransformer(pl.LightningModule):
         rel_logits = self.rel_labeler(out)
         rel_logits = F.relu(rel_logits)
 
-        return F.log_softmax(self.dropout(head_logits)), \
-            F.log_softmax(self.dropout(rel_logits))
+        return self.log_softmax(self.dropout(head_logits)), \
+            self.log_softmax(self.dropout(rel_logits))
 
     def configure_optimizers(self):
         return optim.Adam(lr=self.lr, params=self.parameters())
