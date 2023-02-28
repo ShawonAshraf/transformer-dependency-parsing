@@ -41,7 +41,27 @@ class ParserTransformer(pl.LightningModule):
         return optim.Adam(lr=self.lr, params=self.parameters())
 
     def training_step(self, batch, batch_idx):
-        pass
+        sentence, heads, rels = batch
+        head_logits, rel_logits = self(sentence)
+
+        loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
+
+        return {
+            "loss": loss,
+            "log": {
+                "training_loss": loss
+            }
+        }
 
     def validation_step(self, batch, batch_idx):
-        pass
+        sentence, heads, rels = batch
+        head_logits, rel_logits = self(sentence)
+
+        loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
+
+        return {
+            "loss": loss,
+            "log": {
+                "training_loss": loss
+            }
+        }
