@@ -28,6 +28,7 @@ class ParserTransformer(pl.LightningModule):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         out = self.distil_bert(input_ids=input_ids, attention_mask=attention_mask)
+        out = out.pooler_output
 
         head_logits = self.head_labeler(out)
         head_logits = F.relu(head_logits)
