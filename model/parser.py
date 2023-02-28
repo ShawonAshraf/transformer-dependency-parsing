@@ -49,7 +49,7 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
+        loss = F.nll_loss(head_logits, heads) + F.cross_entropy(rel_logits, rels)
 
         return {
             "loss": loss,
@@ -66,7 +66,7 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
+        loss = F.cross_entropy(head_logits, heads) + F.cross_entropy(rel_logits, rels)
 
         return {
             "loss": loss,
