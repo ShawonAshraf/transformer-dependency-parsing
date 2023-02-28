@@ -37,7 +37,7 @@ class Conll06Dataset(Dataset):
             sentence.tokens,
             return_tensors="pt",
             max_length=self.MAX_LEN,
-            padding="max_len",
+            padding="max_length",
             truncation=True,
             add_special_tokens=True,
             return_attention_mask=True
