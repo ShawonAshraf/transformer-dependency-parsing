@@ -31,23 +31,26 @@ class Conll06Dataset(Dataset):
 
     def __getitem__(self, idx):
         sentence = self.sentences[idx]
+        text = " ".join([token.form for token in sentence.tokens]).strip()
 
         # encode sentence
         encoded_sentence = self.tokenizer.encode_plus(
-            sentence.tokens,
+            text,
             return_tensors="pt",
             max_length=self.MAX_LEN,
             padding="max_length",
             truncation=True,
             add_special_tokens=True,
-            return_attention_mask=True
+            return_attention_mask=True,
+            return_token_type_ids=False
         )
 
         # encode the rels and get the heads
         heads, rels = self.__encode_rel_and_get_head(sentence)
 
         return {
-            "sentence": encoded_sentence,
+            "input_ids": encoded_sentence["input_ids"].flatten(),
+            "attention_mask": encoded_sentence["attention_mask"].flatten(),
             "heads": heads,
             "rels": rels
         }

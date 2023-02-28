@@ -26,8 +26,8 @@ class ParserTransformer(pl.LightningModule):
 
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
-    def forward(self, x: torch.Tensor):
-        out = self.distil_bert(x)
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
+        out = self.distil_bert(input_ids=input_ids, attention_mask=attention_mask)
 
         head_logits = self.head_labeler(out)
         head_logits = F.relu(head_logits)
@@ -41,8 +41,12 @@ class ParserTransformer(pl.LightningModule):
         return optim.Adam(lr=self.lr, params=self.parameters())
 
     def training_step(self, batch, batch_idx):
-        sentence, heads, rels = batch
-        head_logits, rel_logits = self(sentence)
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        heads = batch["heads"]
+        rels = batch["rels"]
+
+        head_logits, rel_logits = self(input_ids, attention_mask)
 
         loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
 
@@ -54,14 +58,18 @@ class ParserTransformer(pl.LightningModule):
         }
 
     def validation_step(self, batch, batch_idx):
-        sentence, heads, rels = batch
-        head_logits, rel_logits = self(sentence)
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        heads = batch["heads"]
+        rels = batch["rels"]
+
+        head_logits, rel_logits = self(input_ids, attention_mask)
 
         loss = F.nll_loss(head_logits, heads) + F.nll_loss(rel_logits, rels)
 
         return {
             "loss": loss,
             "log": {
-                "training_loss": loss
+                "validation_loss": loss
             }
         }
