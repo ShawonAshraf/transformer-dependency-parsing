@@ -28,7 +28,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(trainset, **loader_config, shuffle=True)
     dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    model = ParserTransformer(lr=1e-5,
+    model = ParserTransformer(lr=1e-3,
                               parser_heads=trainset.MAX_LEN,
                               parser_rels=len(list(trainset.rel_dict.keys())),
                               ignore_idx=trainset.pad_idx)
