@@ -27,8 +27,6 @@ class ParserTransformer(pl.LightningModule):
         self.rel_labeler = nn.Linear(384, self.parser_rels)
         self.dropout = nn.Dropout(0.1)
 
-        self.log_softmax = nn.LogSoftmax(dim=-1)
-
         self.loss_fn_head = nn.CrossEntropyLoss()
         self.loss_fn_rel = nn.CrossEntropyLoss()
 
@@ -42,8 +40,7 @@ class ParserTransformer(pl.LightningModule):
         rel_logits = self.rel_labeler(out)
         rel_logits = F.relu(rel_logits)
 
-        return self.log_softmax(self.dropout(head_logits)), \
-            self.log_softmax(self.dropout(rel_logits))
+        return self.dropout(head_logits), self.dropout(rel_logits)
 
     def configure_optimizers(self):
         return optim.Adam(lr=self.lr, params=self.parameters())
