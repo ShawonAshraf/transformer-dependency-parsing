@@ -29,7 +29,8 @@ class ParserTransformer(pl.LightningModule):
 
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn_head = nn.BCEWithLogitsLoss()
+        self.loss_fn_rel = nn.BCEWithLogitsLoss()
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         out = self.distil_bert(input_ids=input_ids, attention_mask=attention_mask)
@@ -58,7 +59,7 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = self.loss_fn(head_logits, heads) + self.loss_fn(rel_logits, rels)
+        loss = self.loss_fn_head(head_logits, heads) + self.loss_fn_rel(rel_logits, rels)
 
         return {
             "loss": loss,
@@ -78,6 +79,6 @@ class ParserTransformer(pl.LightningModule):
 
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = self.loss_fn(head_logits, heads) + self.loss_fn(rel_logits, rels)
+        loss = self.loss_fn_head(head_logits, heads) + self.loss_fn_rel(rel_logits, rels)
 
         self.log("validation_loss", loss, prog_bar=True)
