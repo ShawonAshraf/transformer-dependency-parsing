@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 from transformers import AutoModel
 import torch.nn.functional as F
 import torch.optim as optim
+from einops import rearrange
 
 
 class ParserTransformer(pl.LightningModule):
@@ -28,6 +29,8 @@ class ParserTransformer(pl.LightningModule):
 
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
+        self.loss_fn = nn.BCEWithLogitsLoss()
+
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         out = self.distil_bert(input_ids=input_ids, attention_mask=attention_mask)
         out = out.pooler_output
@@ -50,10 +53,12 @@ class ParserTransformer(pl.LightningModule):
         heads = batch["heads"]
         rels = batch["rels"]
 
+        heads = rearrange(heads, "bs 1 seq -> bs seq")
+        rels = rearrange(rels, "bs 1 seq -> bs seq")
+
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.nll_loss(head_logits, heads, ignore_index=self.ignore_idx) + \
-               F.nll_loss(rel_logits, rels, ignore_index=self.ignore_idx)
+        loss = self.loss_fn(head_logits, heads) + self.loss_fn(rel_logits, rels)
 
         return {
             "loss": loss,
@@ -68,14 +73,11 @@ class ParserTransformer(pl.LightningModule):
         heads = batch["heads"]
         rels = batch["rels"]
 
+        heads = rearrange(heads, "bs 1 seq -> bs seq")
+        rels = rearrange(rels, "bs 1 seq -> bs seq")
+
         head_logits, rel_logits = self(input_ids, attention_mask)
 
-        loss = F.nll_loss(head_logits, heads, ignore_index=self.ignore_idx) + \
-               F.nll_loss(rel_logits, rels, ignore_index=self.ignore_idx)
+        loss = self.loss_fn(head_logits, heads) + self.loss_fn(rel_logits, rels)
 
-        return {
-            "loss": loss,
-            "log": {
-                "validation_loss": loss
-            }
-        }
+        self.log("validation_loss", loss, prog_bar=True)
