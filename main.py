@@ -22,13 +22,13 @@ if __name__ == "__main__":
     loader_config = {
         "pin_memory": True,
         "batch_size": 32,
-        # "num_workers": 12
+        "num_workers": 12
     }
 
     train_loader = DataLoader(trainset, **loader_config, shuffle=True)
     dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    model = ParserTransformer(lr=2e-5,
+    model = ParserTransformer(lr=1e-5,
                               parser_heads=trainset.MAX_LEN,
                               parser_rels=len(list(trainset.rel_dict.keys())),
                               ignore_idx=trainset.pad_idx)
