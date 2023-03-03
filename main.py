@@ -18,7 +18,6 @@ if __name__ == "__main__":
 
     # trainset = Conll06Dataset(train)
     devset = Conll06Dataset(dev)
-    print(devset[0])
 
     # loader_config = {
     #     "pin_memory": True,

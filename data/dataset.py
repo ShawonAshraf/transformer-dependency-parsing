@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 
 from .io import read_conll06_file
 from .sentence import Sentence
+from .preprocess import preprocess
 
 
 class Conll06Dataset(Dataset):
@@ -19,13 +20,14 @@ class Conll06Dataset(Dataset):
         # read sentences from file
         self.sentences = read_conll06_file(self.file_path)
 
-        self.vocab = self.__build_vocab()
+        # get preprocessed vocab and rels
+        pre = preprocess(self.sentences)
+
+        self.vocab = pre["vocabulary"]
         self.vocab_size = len(self.vocab.keys())
 
-        # for label
-        self.rel_dict = {}
-        self.__build_rel_dict()
-        self.pad_idx = self.rel_dict["<PAD>"]
+        # for relation label
+        self.rel_dict = pre["rel_labels"]
         self.n_rels = len(list(self.rel_dict.keys()))
 
     def __len__(self) -> int:
@@ -46,25 +48,6 @@ class Conll06Dataset(Dataset):
 
     # ============ preprocessing methods ===========
 
-    # build vocab
-    def __build_vocab(self) -> Dict:
-        words = set()
-        vocab = dict()
-
-        words.add("<ROOT>")
-        words.add("<PAD>")
-        words.add("<OOV>")
-
-        for sentence in self.sentences:
-            tokens = sentence.tokens
-            for token in tokens:
-                words.add(token.form)
-
-        for idx, w in enumerate(words):
-            vocab[w] = idx
-
-        return vocab
-
     # encode sentence
     def __encode_one_sentence(self, sentence: Sentence) -> torch.Tensor:
         # encode and pad basically
@@ -81,22 +64,6 @@ class Conll06Dataset(Dataset):
                 encoded[idx + 1] = self.vocab["<OOV>"]
 
         return encoded
-
-    # build rel dict
-    def __build_rel_dict(self) -> None:
-        rel_set = set()
-        for _, sentence in tqdm(enumerate(self.sentences), desc="encoding relation labels"):
-            rels = [token.rel for token in sentence.tokens]
-            for rel in rels:
-                rel_set.add(rel)
-
-        # add <PAD>
-        rel_set.add("<PAD>")
-
-        # map to int
-        for idx, rel in tqdm(enumerate(rel_set), desc="mapping rel to int"):
-            if rel not in self.rel_dict.keys():
-                self.rel_dict[rel] = idx
 
     # encode labels and get head
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
