@@ -10,6 +10,11 @@ from model.parser import ParserTransformer
 torch.set_float32_matmul_precision("medium")
 
 if __name__ == "__main__":
+    pre = os.path.join(
+        os.getcwd(),
+        "data",
+        "preprocessed.json"
+    )
     train = "/home/shawon/Projects/parser-data/english/train/wsj_train.conll06"
     dev = "/home/shawon/Projects/parser-data/english/dev/wsj_dev.conll06.gold"
 
@@ -17,7 +22,9 @@ if __name__ == "__main__":
     assert os.path.exists(dev)
 
     # trainset = Conll06Dataset(train)
-    devset = Conll06Dataset(dev)
+    devset = Conll06Dataset(dev, pre)
+    print(devset[0])
+    print(devset.vocab["<ROOT>"])
 
     # loader_config = {
     #     "pin_memory": True,

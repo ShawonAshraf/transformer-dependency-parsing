@@ -3,6 +3,11 @@ from typing import List, Dict, Tuple
 import os
 import json
 
+"""
+    generate a vocabulary dict from sentences
+    vocabulary is a word -> int mapping
+"""
+
 
 def build_vocabulary(sentences: List[Sentence]) -> Dict:
     words = set()
@@ -26,6 +31,11 @@ def build_vocabulary(sentences: List[Sentence]) -> Dict:
     return vocabulary
 
 
+"""
+    build a relation label -> int mapping from sentences
+"""
+
+
 def build_rel_dict(sentences: List[Sentence]) -> Dict:
     rel_set = set()
     rel_dict = dict()
@@ -45,6 +55,12 @@ def build_rel_dict(sentences: List[Sentence]) -> Dict:
     return rel_dict
 
 
+"""
+    the index of the set for words and rels can change on each run, 
+    so to keep them consistent and reproducible, they must be persisted on a json file
+"""
+
+
 def persist(vocab: Dict, rels: Dict) -> None:
     persisted_obj = {
         "vocabulary": vocab,
@@ -56,25 +72,29 @@ def persist(vocab: Dict, rels: Dict) -> None:
         f.write(json_str)
 
 
-def load() -> Dict:
+"""
+    load the persisted json file
+"""
+
+
+def load(file_path) -> Dict:
+    assert os.path.exists(file_path)
     obj = dict()
 
-    with open("preprocessed.json", "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         json_str = f.read()
         obj = json.loads(json_str)
 
     return obj
 
 
-def preprocess(sentences: List[Sentence]) -> Dict:
-    if os.path.exists("preprocessed.json"):
-        obj = load()
-    else:
-        vocab = build_vocabulary(sentences)
-        rels = build_rel_dict(sentences)
+"""
+    builds dicts and persists
+"""
 
-        persist(vocab, rels)
 
-        obj = load()
+def preprocess(sentences: List[Sentence]):
+    vocab = build_vocabulary(sentences)
+    rels = build_rel_dict(sentences)
 
-    return obj
+    persist(vocab, rels)
