@@ -63,7 +63,7 @@ def build_rel_dict(sentences: List[Sentence]) -> Dict:
 
 
 def persist(file_path: str, vocab: Dict, rels: Dict) -> None:
-    assert os.path.exists(file_path)
+    assert not os.path.exists(file_path)
 
     persisted_obj = {
         "vocabulary": vocab,
@@ -98,7 +98,7 @@ def load(file_path) -> Dict:
 
 
 def preprocess(pre_file_path: str, dataset_path: str):
-    assert os.path.exists(pre_file_path)
+    assert not os.path.exists(pre_file_path)
     assert os.path.exists(dataset_path)
 
     sentences = read_conll06_file(dataset_path)

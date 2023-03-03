@@ -8,7 +8,6 @@ from torch.utils.data import DataLoader
 from model.parser import ParserTransformer
 
 from data.preprocess import preprocess
-from data.io import read_conll06_file
 
 torch.set_float32_matmul_precision("medium")
 
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     assert os.path.exists(dev)
 
     # run preprocess on the train set only
-    preprocess(read_conll06_file(train))
+    preprocess(pre, train)
 
     # trainset = Conll06Dataset(train)
     # devset = Conll06Dataset(dev, pre)
