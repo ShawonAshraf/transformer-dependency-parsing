@@ -9,47 +9,64 @@ from model.parser import ParserTransformer
 
 from data.preprocess import preprocess
 
-torch.set_float32_matmul_precision("medium")
+argparser = argparse.ArgumentParser()
+
+# language: en | de
+argparser.add_argument("--lang", required=True, type=str)
+# path to train dataset
+argparser.add_argument("--train", required=True, type=str)
+# path to dev dataset
+argparser.add_argument("--dev", required=True, type=str)
+# path to preprocessed vocab and rel file
+argparser.add_argument("--pre", required=True, type=str)
+
+# number of batches
+argparser.add_argument("--batches", required=True, type=int)
+# number of cpu workers
+argparser.add_argument("--workers", required=True, type=int, default=1)
+
+# epochs
+argparser.add_argument("--epochs", required=True, type=int)
+# use half precision or not
+argparser.add_argument("--fp16", required=True, type=bool)
+# use tensor core precision
+# available on newer gpus only
+# medium | high | highest
+argparser.add_argument("--tf32", required=False, type=str, default="high")
+
+args = argparser.parse_args()
 
 if __name__ == "__main__":
-    pre = os.path.join(
-        os.getcwd(),
-        "data",
-        "preprocessed.json"
-    )
-    train = "/home/shawon/Projects/parser-data/english/train/wsj_train.conll06"
-    dev = "/home/shawon/Projects/parser-data/english/dev/wsj_dev.conll06.gold"
+    # set tf32
+    torch.set_float32_matmul_precision(args.tf32)
 
-    assert os.path.exists(train)
-    assert os.path.exists(dev)
+    assert os.path.exists(args.train)
+    assert os.path.exists(args.dev)
 
     # run preprocess on the train set only
-    preprocess(pre, train)
+    if not os.path.exists(args.pre):
+        preprocess(args.pre, args.train)
 
-    # trainset = Conll06Dataset(train)
-    # devset = Conll06Dataset(dev, pre)
+    trainset = Conll06Dataset(args.train, args.pre)
+    devset = Conll06Dataset(args.dev, args.pre)
 
-    # loader_config = {
-    #     "pin_memory": True,
-    #     "batch_size": 32,
-    #     "num_workers": 12
-    # }
+    loader_config = {
+        "pin_memory": True,
+        "batch_size": args.batches,
+        "num_workers": args.workers
+    }
 
-    # train_loader = DataLoader(trainset, **loader_config, shuffle=True)
-    # dev_loader = DataLoader(devset, **loader_config, shuffle=False)
+    train_loader = DataLoader(trainset, **loader_config, shuffle=True)
+    dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    # model = ParserTransformer(lr=1e-3,
-    #                           parser_heads=trainset.MAX_LEN,
-    #                           parser_rels=len(list(trainset.rel_dict.keys())),
-    #                           ignore_idx=trainset.pad_idx)
+    model = ParserTransformer()
+    trainer = pl.Trainer(
+        max_epochs=args.epochs,
+        accelerator="gpu",
+        devices=1,
+        precision=args.fp16,
+        gradient_clip_val=0.1,
+        val_check_interval=100
+    )
 
-    # trainer = pl.Trainer(
-    #     max_epochs=5,
-    #     accelerator="gpu",
-    #     devices=1,
-    #     precision=16,
-    #     gradient_clip_val=0.1,
-    #     val_check_interval=300
-    # )
-
-    # trainer.fit(model, train_loader, dev_loader)
+    trainer.fit(model, train_loader, dev_loader)

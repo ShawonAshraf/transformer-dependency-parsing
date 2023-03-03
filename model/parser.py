@@ -8,5 +8,5 @@ from .mlp import MLP
 
 
 class ParserTransformer(pl.LightningModule):
-    def __init__(self) -> None:
+    def __init__(self, lr: float = 1e-3) -> None:
         super().__init__()
