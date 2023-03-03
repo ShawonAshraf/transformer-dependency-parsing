@@ -7,6 +7,9 @@ from data.dataset import Conll06Dataset
 from torch.utils.data import DataLoader
 from model.parser import ParserTransformer
 
+from data.preprocess import preprocess
+from data.io import read_conll06_file
+
 torch.set_float32_matmul_precision("medium")
 
 if __name__ == "__main__":
@@ -21,10 +24,11 @@ if __name__ == "__main__":
     assert os.path.exists(train)
     assert os.path.exists(dev)
 
+    # run preprocess on the train set only
+    preprocess(read_conll06_file(train))
+
     # trainset = Conll06Dataset(train)
-    devset = Conll06Dataset(dev, pre)
-    print(devset[0])
-    print(devset.vocab["<ROOT>"])
+    # devset = Conll06Dataset(dev, pre)
 
     # loader_config = {
     #     "pin_memory": True,

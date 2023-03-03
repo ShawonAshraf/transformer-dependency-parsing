@@ -61,13 +61,15 @@ def build_rel_dict(sentences: List[Sentence]) -> Dict:
 """
 
 
-def persist(vocab: Dict, rels: Dict) -> None:
+def persist(file_path: str, vocab: Dict, rels: Dict) -> None:
+    assert os.path.exists(file_path)
+
     persisted_obj = {
         "vocabulary": vocab,
         "rel_labels": rels
     }
 
-    with open("preprocessed.json", "w", encoding="utf-8") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json_str = json.dumps(persisted_obj)
         f.write(json_str)
 
@@ -79,6 +81,7 @@ def persist(vocab: Dict, rels: Dict) -> None:
 
 def load(file_path) -> Dict:
     assert os.path.exists(file_path)
+
     obj = dict()
 
     with open(file_path, "r", encoding="utf-8") as f:
