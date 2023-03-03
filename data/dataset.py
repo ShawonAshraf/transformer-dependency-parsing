@@ -1,9 +1,8 @@
-from typing import Tuple
+from typing import Tuple, Dict
 
 import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer
 
 from .io import read_conll06_file
 from .sentence import Sentence
@@ -13,15 +12,15 @@ class Conll06Dataset(Dataset):
 
     # ============== dataset methods =============
 
-    def __init__(self, file_path: str, MAX_LEN=512) -> None:
+    def __init__(self, file_path: str, MAX_LEN=150) -> None:
         self.file_path = file_path
         self.MAX_LEN = MAX_LEN
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            "microsoft/xtremedistil-l6-h384-uncased")
-
         # read sentences from file
         self.sentences = read_conll06_file(self.file_path)
+
+        self.vocab = self.__build_vocab()
+        self.vocab_size = len(self.vocab.keys())
 
         # for label
         self.rel_dict = {}
@@ -34,34 +33,56 @@ class Conll06Dataset(Dataset):
 
     def __getitem__(self, idx):
         sentence = self.sentences[idx]
-        text = " ".join([token.form for token in sentence.tokens]).strip()
-
-        # encode sentence
-        encoded_sentence = self.tokenizer.encode_plus(
-            text,
-            return_tensors="pt",
-            max_length=self.MAX_LEN,
-            padding="max_length",
-            truncation=True,
-            add_special_tokens=True,
-            return_attention_mask=True,
-            return_token_type_ids=False
-        )
-
+        # endcode sentences
+        encoded = self.__encode_one_sentence(sentence)
         # encode the rels and get the heads
         heads, rels = self.__encode_rel_and_get_head(sentence)
 
         return {
-            "input_ids": encoded_sentence["input_ids"].flatten(),
-            "attention_mask": encoded_sentence["attention_mask"].flatten(),
-            "heads": heads.reshape(1, -1),
-            "rels": rels.reshape(1, -1)
+            "sentence": encoded,
+            "heads": heads,
+            "rels": rels
         }
 
     # ============ preprocessing methods ===========
 
-    # build rel dict
+    # build vocab
+    def __build_vocab(self) -> Dict:
+        words = set()
+        vocab = dict()
 
+        words.add("<ROOT>")
+        words.add("<PAD>")
+        words.add("<OOV>")
+
+        for sentence in self.sentences:
+            tokens = sentence.tokens
+            for token in tokens:
+                words.add(token.form)
+
+        for idx, w in enumerate(words):
+            vocab[w] = idx
+
+        return vocab
+
+    # encode sentence
+    def __encode_one_sentence(self, sentence: Sentence) -> torch.Tensor:
+        # encode and pad basically
+        # fill with pad tokens by default
+        encoded = torch.ones(size=(self.MAX_LEN, )) * self.vocab["<PAD>"]
+        # index 0 is always the ROOT
+        encoded[0] = self.vocab["<ROOT>"]
+
+        tokens = sentence.tokens
+        for idx, token in enumerate(tokens):
+            if token.form in self.vocab.keys():
+                encoded[idx + 1] = self.vocab[token.form]
+            else:
+                encoded[idx + 1] = self.vocab["<OOV>"]
+
+        return encoded
+
+    # build rel dict
     def __build_rel_dict(self) -> None:
         rel_set = set()
         for _, sentence in tqdm(enumerate(self.sentences), desc="encoding relation labels"):
@@ -83,8 +104,8 @@ class Conll06Dataset(Dataset):
         rels = torch.zeros(self.n_rels, dtype=torch.float)
 
         for _, token in enumerate(sentence.tokens):
-            heads[token.head - 1] = 1.0
+            heads[token.head] = token.head
             rel_idx = self.rel_dict[token.rel]
-            rels[rel_idx] = 1.0
+            rels[rel_idx] = rel_idx
 
         return heads, rels

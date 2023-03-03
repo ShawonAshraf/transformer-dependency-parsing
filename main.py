@@ -16,30 +16,31 @@ if __name__ == "__main__":
     assert os.path.exists(train)
     assert os.path.exists(dev)
 
-    trainset = Conll06Dataset(train)
+    # trainset = Conll06Dataset(train)
     devset = Conll06Dataset(dev)
+    print(devset[0])
 
-    loader_config = {
-        "pin_memory": True,
-        "batch_size": 32,
-        "num_workers": 12
-    }
+    # loader_config = {
+    #     "pin_memory": True,
+    #     "batch_size": 32,
+    #     "num_workers": 12
+    # }
 
-    train_loader = DataLoader(trainset, **loader_config, shuffle=True)
-    dev_loader = DataLoader(devset, **loader_config, shuffle=False)
+    # train_loader = DataLoader(trainset, **loader_config, shuffle=True)
+    # dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    model = ParserTransformer(lr=1e-3,
-                              parser_heads=trainset.MAX_LEN,
-                              parser_rels=len(list(trainset.rel_dict.keys())),
-                              ignore_idx=trainset.pad_idx)
+    # model = ParserTransformer(lr=1e-3,
+    #                           parser_heads=trainset.MAX_LEN,
+    #                           parser_rels=len(list(trainset.rel_dict.keys())),
+    #                           ignore_idx=trainset.pad_idx)
 
-    trainer = pl.Trainer(
-        max_epochs=5,
-        accelerator="gpu",
-        devices=1,
-        precision=16,
-        gradient_clip_val=0.1,
-        val_check_interval=300
-    )
+    # trainer = pl.Trainer(
+    #     max_epochs=5,
+    #     accelerator="gpu",
+    #     devices=1,
+    #     precision=16,
+    #     gradient_clip_val=0.1,
+    #     val_check_interval=300
+    # )
 
-    trainer.fit(model, train_loader, dev_loader)
+    # trainer.fit(model, train_loader, dev_loader)
