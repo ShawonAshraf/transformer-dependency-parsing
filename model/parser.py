@@ -45,8 +45,8 @@ class ParserTransformer(pl.LightningModule):
         self.n_rels = n_rels
 
         # embedding layer
-        self.embedding = nn.Embedding(
-            num_embeddings=self.vocab_size, embedding_dim=self.d_model)
+        # self.embedding = nn.Embedding(
+        #    num_embeddings=self.vocab_size, embedding_dim=self.d_model)
 
         # positional encoder
         self.positional_encoder = PositionalEncoder(
@@ -78,11 +78,11 @@ class ParserTransformer(pl.LightningModule):
                 heads: torch.Tensor,
                 rels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        s = self.embedding(sentence) * torch.sqrt(torch.tensor(self.d_model))
+        s = sentence * torch.sqrt(torch.tensor(self.d_model))
         h = heads * torch.sqrt(torch.tensor(self.d_model))
         r = rels * torch.sqrt(torch.tensor(self.d_model))
 
-        s = rearrange(s, "bs seq embed -> seq bs embed")
+        s = rearrange(s, "bs seq -> seq bs")
         h = rearrange(h, "bs seq -> seq bs")
         r = rearrange(r, "bs seq -> seq bs")
 
