@@ -7,7 +7,7 @@ from einops import rearrange
 """
 
 
-class PositionalEncoding(nn.Module):
+class PositionalEncoder(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 128) -> None:
         super().__init__()
 
