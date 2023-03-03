@@ -1,4 +1,5 @@
 from .sentence import Sentence
+from .io import read_conll06_file
 from typing import List, Dict, Tuple
 import os
 import json
@@ -96,8 +97,13 @@ def load(file_path) -> Dict:
 """
 
 
-def preprocess(sentences: List[Sentence]):
+def preprocess(pre_file_path: str, dataset_path: str):
+    assert os.path.exists(pre_file_path)
+    assert os.path.exists(dataset_path)
+
+    sentences = read_conll06_file(dataset_path)
+
     vocab = build_vocabulary(sentences)
     rels = build_rel_dict(sentences)
 
-    persist(vocab, rels)
+    persist(pre_file_path, vocab, rels)
