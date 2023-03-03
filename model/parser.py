@@ -76,7 +76,7 @@ class ParserTransformer(pl.LightningModule):
 
     def forward(self, sentence: torch.Tensor,
                 heads: torch.Tensor,
-                rels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                rels: torch.Tensor):
 
         s = sentence * torch.sqrt(torch.tensor(self.d_model))
         h = heads * torch.sqrt(torch.tensor(self.d_model))
@@ -96,4 +96,41 @@ class ParserTransformer(pl.LightningModule):
         out2 = self.sentence_rel_transformer(s, r)
         out2 = self.rel_classifier(out2)
 
-        return out1, out2
+        return F.log_softmax(out1), F.log_softmax(out2)
+
+    def configure_optimizers(self):
+        return optim.Adam(params=self.parameters())
+
+    def training_step(self, batch, batch_idx):
+        sentence = batch["sentence"]
+        heads = batch["heads"]
+        rels = batch["rels"]
+
+        out1, out2 = self(sentence, heads, rels)
+
+        loss = F.cross_entropy(out1, heads) + F.cross_entropy(out2, rels)
+
+        return {
+            "loss": loss,
+            "log": {
+                "training_loss": loss
+            }
+        }
+
+    def validation_step(self, batch, batch_idx):
+        sentence = batch["sentence"]
+        heads = batch["heads"]
+        rels = batch["rels"]
+
+        out1, out2 = self(sentence, heads, rels)
+
+        loss = F.cross_entropy(out1, heads) + F.cross_entropy(out2, rels)
+
+        self.log("validation_loss", loss, prog_bar=True)
+
+        return {
+            "validation_ loss": loss,
+            "log": {
+                "validation_loss": loss
+            }
+        }
