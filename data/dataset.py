@@ -13,11 +13,12 @@ class Conll06Dataset(Dataset):
 
     # ============== dataset methods =============
 
-    def __init__(self, file_path: str, MAX_LEN=150) -> None:
+    def __init__(self, file_path: str, MAX_LEN=512) -> None:
         self.file_path = file_path
         self.MAX_LEN = MAX_LEN
 
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/xtremedistil-l6-h384-uncased")
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            "microsoft/xtremedistil-l6-h384-uncased")
 
         # read sentences from file
         self.sentences = read_conll06_file(self.file_path)
