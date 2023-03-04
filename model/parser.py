@@ -45,8 +45,8 @@ class ParserTransformer(pl.LightningModule):
         self.n_rels = n_rels
 
         # embedding layer
-        # self.embedding = nn.Embedding(
-        #    num_embeddings=self.vocab_size, embedding_dim=self.d_model)
+        self.embedding = nn.Embedding(
+            num_embeddings=self.vocab_size, embedding_dim=self.d_model)
 
         # positional encoder
         self.positional_encoder = PositionalEncoder(
@@ -74,17 +74,20 @@ class ParserTransformer(pl.LightningModule):
             self.d_model, self.mlp_hidden, self.n_parser_heads)
         self.rel_classifier = MLP(self.d_model, self.mlp_hidden, self.n_rels)
 
+        # loss function
+        self.criterion = nn.NLLLoss()
+
     def forward(self, sentence: torch.Tensor,
                 heads: torch.Tensor,
                 rels: torch.Tensor):
 
-        s = sentence * torch.sqrt(torch.tensor(self.d_model))
-        h = heads * torch.sqrt(torch.tensor(self.d_model))
-        r = rels * torch.sqrt(torch.tensor(self.d_model))
+        s = self.embedding(sentence) * torch.sqrt(torch.tensor(self.d_model))
+        h = self.embedding(heads) * torch.sqrt(torch.tensor(self.d_model))
+        r = self.embedding(rels) * torch.sqrt(torch.tensor(self.d_model))
 
-        s = rearrange(s, "bs seq -> seq bs")
-        h = rearrange(h, "bs seq -> seq bs")
-        r = rearrange(r, "bs seq -> seq bs")
+        s = rearrange(s, "bs seq embed -> seq bs embed")
+        h = rearrange(h, "bs seq embed -> seq bs embed")
+        r = rearrange(r, "bs seq embed -> seq bs embed")
 
         s = self.positional_encoder(s)
         h = self.positional_encoder(h)
@@ -96,7 +99,7 @@ class ParserTransformer(pl.LightningModule):
         out2 = self.sentence_rel_transformer(s, r)
         out2 = self.rel_classifier(out2)
 
-        return F.log_softmax(out1), F.log_softmax(out2)
+        return F.log_softmax(out1, dim=-1), F.log_softmax(out2, dim=-1)
 
     def configure_optimizers(self):
         return optim.Adam(params=self.parameters())
@@ -108,7 +111,11 @@ class ParserTransformer(pl.LightningModule):
 
         out1, out2 = self(sentence, heads, rels)
 
-        loss = F.cross_entropy(out1, heads) + F.cross_entropy(out2, rels)
+        # rearrange for loss
+        out1 = rearrange(out1, "seq bs probas -> bs probas seq")
+        out2 = rearrange(out2, "seq bs probas -> bs probas seq")
+
+        loss = self.criterion(out1, heads) + self.criterion(out2, rels)
 
         return {
             "loss": loss,
@@ -124,7 +131,11 @@ class ParserTransformer(pl.LightningModule):
 
         out1, out2 = self(sentence, heads, rels)
 
-        loss = F.cross_entropy(out1, heads) + F.cross_entropy(out2, rels)
+        # rearrange for loss
+        out1 = rearrange(out1, "seq bs probas -> bs probas seq")
+        out2 = rearrange(out2, "seq bs probas -> bs probas seq")
+
+        loss = self.criterion(out1, heads) + self.criterion(out2, rels)
 
         self.log("validation_loss", loss, prog_bar=True)
 

@@ -9,75 +9,67 @@ from model.parser import ParserTransformer
 
 from data.preprocess import preprocess
 
-# argparser = argparse.ArgumentParser()
+argparser = argparse.ArgumentParser()
 
-# # language: en | de
-# argparser.add_argument("--lang", required=True, type=str)
-# # path to train dataset
-# argparser.add_argument("--train", required=True, type=str)
-# # path to dev dataset
-# argparser.add_argument("--dev", required=True, type=str)
-# # path to preprocessed vocab and rel file
-# argparser.add_argument("--pre", required=True, type=str)
+# language: en | de
+argparser.add_argument("--lang", required=True, type=str)
+# path to train dataset
+argparser.add_argument("--train", required=True, type=str)
+# path to dev dataset
+argparser.add_argument("--dev", required=True, type=str)
+# path to preprocessed vocab and rel file
+argparser.add_argument("--pre", required=True, type=str)
 
-# # number of batches
-# argparser.add_argument("--batches", required=True, type=int)
-# # number of cpu workers
-# argparser.add_argument("--workers", required=True, type=int, default=1)
+# number of batches
+argparser.add_argument("--batches", required=True, type=int)
+# number of cpu workers
+argparser.add_argument("--workers", required=True, type=int, default=1)
 
-# # epochs
-# argparser.add_argument("--epochs", required=True, type=int)
-# # use half precision or not
-# argparser.add_argument("--fp16", required=True, type=bool)
-# # use tensor core precision
-# # available on newer gpus only
-# # medium | high | highest
-# argparser.add_argument("--tf32", required=False, type=str, default="high")
+# epochs
+argparser.add_argument("--epochs", required=True, type=int)
+# use half precision or not
+argparser.add_argument("--fp16", required=True, type=int)
+# use tensor core precision
+# available on newer gpus only
+# medium | high | highest
+argparser.add_argument("--tf32", required=False, type=str, default="high")
 
-# args = argparser.parse_args()
+args = argparser.parse_args()
 
 if __name__ == "__main__":
     # set tf32
-    # torch.set_float32_matmul_precision(args.tf32)
+    torch.set_float32_matmul_precision(args.tf32)
 
-    # assert os.path.exists(args.train)
-    # assert os.path.exists(args.dev)
+    assert os.path.exists(args.train)
+    assert os.path.exists(args.dev)
 
-    # # run preprocess on the train set only
-    # if not os.path.exists(args.pre):
-    #     preprocess(args.pre, args.train)
+    # run preprocess on the train set only
+    if not os.path.exists(args.pre):
+        preprocess(args.pre, args.train)
 
-    # trainset = Conll06Dataset(args.train, args.pre)
-    # devset = Conll06Dataset(args.dev, args.pre)
+    trainset = Conll06Dataset(args.train, args.pre)
+    devset = Conll06Dataset(args.dev, args.pre)
 
-    # loader_config = {
-    #     "pin_memory": True,
-    #     "batch_size": args.batches,
-    #     "num_workers": args.workers
-    # }
+    loader_config = {
+        "pin_memory": True,
+        "batch_size": args.batches,
+        "num_workers": args.workers
+    }
 
-    # train_loader = DataLoader(trainset, **loader_config, shuffle=True)
-    # dev_loader = DataLoader(devset, **loader_config, shuffle=False)
+    train_loader = DataLoader(trainset, **loader_config, shuffle=True)
+    dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    # model = ParserTransformer()
-    # trainer = pl.Trainer(
-    #     max_epochs=args.epochs,
-    #     accelerator="gpu",
-    #     devices=1,
-    #     precision=args.fp16,
-    #     gradient_clip_val=0.1,
-    #     val_check_interval=100
-    # )
+    model = ParserTransformer(vocab_size=trainset.vocab_size,
+                              max_len=trainset.MAX_LEN,
+                              n_parser_heads=trainset.MAX_LEN,
+                              n_rels=trainset.n_rels)
+    trainer = pl.Trainer(
+        max_epochs=args.epochs,
+        accelerator="gpu",
+        devices=1,
+        precision=args.fp16,
+        gradient_clip_val=0.1,
+        val_check_interval=100
+    )
 
-    # trainer.fit(model, train_loader, dev_loader)
-
-    model = ParserTransformer(
-        vocab_size=100, max_len=128, n_parser_heads=128, n_rels=128)
-
-    s = torch.randint(0, 50, (1, 50))
-    h = torch.randint(0, 50, (1, 50))
-    r = torch.randint(0, 50, (1, 50))
-
-    out1, out2 = model(s, h, r)
-    print(out1.shape)
-    print(out2.shape)
+    trainer.fit(model, train_loader, dev_loader)
