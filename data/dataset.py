@@ -60,7 +60,8 @@ class Conll06Dataset(Dataset):
     def __encode_one_sentence(self, sentence: Sentence) -> torch.Tensor:
         # encode and pad basically
         # fill with pad tokens by default
-        encoded = torch.ones(self.MAX_LEN) * self.vocab["<PAD>"]
+        encoded = torch.ones(
+            self.MAX_LEN, dtype=torch.long) * self.vocab["<PAD>"]
         # index 0 is always the ROOT
         encoded[0] = self.vocab["<ROOT>"]
 
@@ -77,10 +78,10 @@ class Conll06Dataset(Dataset):
     # encode and pad basically
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        heads = torch.ones(self.MAX_LEN, dtype=torch.float) * \
+        heads = torch.ones(self.MAX_LEN, dtype=torch.long) * \
             self.PAD_IDX_FOR_HEAD
 
-        rels = torch.ones(self.n_rels, dtype=torch.float) * \
+        rels = torch.ones(self.MAX_LEN, dtype=torch.long) * \
             self.rel_dict["<PAD>"]
 
         for _, token in enumerate(sentence.tokens):
