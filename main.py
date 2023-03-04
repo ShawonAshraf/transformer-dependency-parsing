@@ -62,7 +62,7 @@ if __name__ == "__main__":
     model = ParserTransformer(vocab_size=trainset.vocab_size,
                               max_len=trainset.MAX_LEN,
                               n_parser_heads=trainset.MAX_LEN,
-                              n_rels=trainset.n_rels)
+                              n_rels=trainset.n_rels, ignore_index=trainset.rel_dict["<PAD>"])
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         accelerator="gpu",

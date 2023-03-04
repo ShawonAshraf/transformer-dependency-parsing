@@ -22,6 +22,7 @@ class ParserTransformer(pl.LightningModule):
                  max_len: int,
                  n_parser_heads: int,
                  n_rels: int,
+                 ignore_index: int,
                  mlp_hidden: int = 300,
                  n_decoder_layers: int = 6,
                  n_encoder_layers: int = 6,
@@ -75,7 +76,7 @@ class ParserTransformer(pl.LightningModule):
         self.rel_classifier = MLP(self.d_model, self.mlp_hidden, self.n_rels)
 
         # loss function
-        self.criterion = nn.NLLLoss()
+        self.criterion = nn.NLLLoss(ignore_index=ignore_index)
 
     def forward(self, sentence: torch.Tensor,
                 heads: torch.Tensor,
@@ -94,9 +95,11 @@ class ParserTransformer(pl.LightningModule):
         r = self.positional_encoder(r)
 
         out1 = self.sentences_head_transformer(s, h)
+        out1 = self.relu1(out1)
         out1 = self.head_classifier(out1)
 
         out2 = self.sentence_rel_transformer(s, r)
+        out2 = self.relu2(out2)
         out2 = self.rel_classifier(out2)
 
         return F.log_softmax(out1, dim=-1), F.log_softmax(out2, dim=-1)
