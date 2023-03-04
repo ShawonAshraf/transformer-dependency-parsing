@@ -28,7 +28,7 @@ argparser.add_argument("--workers", required=True, type=int, default=1)
 # epochs
 argparser.add_argument("--epochs", required=True, type=int)
 # use half precision or not
-argparser.add_argument("--fp16", required=True, type=int)
+argparser.add_argument("--precision", required=False, type=int, default=16)
 # use tensor core precision
 # available on newer gpus only
 # medium | high | highest
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         max_epochs=args.epochs,
         accelerator="gpu",
         devices=1,
-        precision=args.fp16,
+        precision=args.precision,
         gradient_clip_val=0.1,
         val_check_interval=100
     )
