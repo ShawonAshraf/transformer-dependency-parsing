@@ -102,7 +102,7 @@ class ParserTransformer(pl.LightningModule):
         return F.log_softmax(out1, dim=-1), F.log_softmax(out2, dim=-1)
 
     def configure_optimizers(self):
-        return optim.Adam(params=self.parameters())
+        return optim.AdamW(params=self.parameters())
 
     def training_step(self, batch, batch_idx):
         sentence = batch["sentence"]
