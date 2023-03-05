@@ -24,7 +24,6 @@ class ParserTransformer(pl.LightningModule):
                  n_rels: int,
                  ignore_index: int,
                  mlp_hidden: int = 300,
-                 n_decoder_layers: int = 6,
                  n_encoder_layers: int = 6,
                  n_heads: int = 8,
                  d_model: int = 512,
@@ -36,7 +35,6 @@ class ParserTransformer(pl.LightningModule):
         self.d_model = d_model
         self.n_heads = n_heads
         self.n_encoders = n_encoder_layers
-        self.n_decoders = n_decoder_layers
         self.max_len = max_len
         self.lr = lr
 
@@ -54,20 +52,10 @@ class ParserTransformer(pl.LightningModule):
             d_model=self.d_model, max_len=self.max_len)
 
         # transformers for alignment
-        self.sentences_head_transformer = nn.Transformer(
-            d_model=self.d_model,
-            nhead=self.n_heads,
-            num_encoder_layers=self.n_encoders,
-            num_decoder_layers=self.n_decoders
-        )
+        self.sentences_head_transformer = None
         self.relu1 = nn.ReLU()
 
-        self.sentence_rel_transformer = nn.Transformer(
-            d_model=self.d_model,
-            nhead=self.n_heads,
-            num_encoder_layers=self.n_encoders,
-            num_decoder_layers=self.n_decoders
-        )
+        self.sentence_rel_transformer = None
         self.relu2 = nn.ReLU()
 
         # mlp for classification
