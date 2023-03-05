@@ -14,6 +14,6 @@ class MLP(nn.Module):
     def forward(self, x):
         out = self.lin1(x)
         out = self.lin2(out)
-        out = self.dropout(out)
+        out = self.relu(out)
 
-        return self.relu(out)
+        return self.dropout(out)
