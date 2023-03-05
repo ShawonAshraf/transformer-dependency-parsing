@@ -99,10 +99,12 @@ class ParserTransformer(pl.LightningModule):
         heads = batch["heads"]
         rels = batch["rels"]
 
-        out1, out2 = self(input_ids, attention_mask)
+        heads = rearrange(heads, "bs seq -> bs seq 1")
+        rels = rearrange(rels, "bs seq -> bs seq 1")
 
-        print(out1.size())
-        print(out2.size())
+        print(rels)
+
+        out1, out2 = self(input_ids, attention_mask)
 
         loss = self.criterion(out1, heads) + self.criterion(out2, rels)
 
