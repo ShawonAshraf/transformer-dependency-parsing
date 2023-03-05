@@ -19,6 +19,9 @@ argparser.add_argument("--train", required=True, type=str)
 argparser.add_argument("--dev", required=True, type=str)
 # path to preprocessed vocab and rel file
 argparser.add_argument("--pre", required=True, type=str)
+# pretrained model name
+argparser.add_argument("--model", required=True, type=str)
+
 
 # number of batches
 argparser.add_argument("--batches", required=True, type=int)
@@ -47,8 +50,8 @@ if __name__ == "__main__":
     if not os.path.exists(args.pre):
         preprocess(args.pre, args.train)
 
-    trainset = Conll06Dataset(args.train, args.pre)
-    devset = Conll06Dataset(args.dev, args.pre)
+    trainset = Conll06Dataset(args.train, args.pre, args.model)
+    devset = Conll06Dataset(args.dev, args.pre, args.model)
 
     loader_config = {
         "pin_memory": True,
@@ -59,10 +62,10 @@ if __name__ == "__main__":
     train_loader = DataLoader(trainset, **loader_config, shuffle=True)
     dev_loader = DataLoader(devset, **loader_config, shuffle=False)
 
-    model = ParserTransformer(vocab_size=trainset.vocab_size,
-                              max_len=trainset.MAX_LEN,
-                              n_parser_heads=trainset.MAX_LEN,
-                              n_rels=trainset.n_rels, ignore_index=trainset.rel_dict["<PAD>"])
+    model = ParserTransformer(n_parser_heads=trainset.MAX_LEN,
+                              n_rels=trainset.n_rels,
+                              ignore_index=trainset.rel_dict["<PAD>"],
+                              encoder_pretrained_name=args.model)
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         accelerator="gpu",
