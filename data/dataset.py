@@ -8,6 +8,8 @@ from .io import read_conll06_file
 from .sentence import Sentence
 from .preprocess import load
 
+from transformers import AutoTokenizer
+
 
 class Conll06Dataset(Dataset):
 
@@ -18,71 +20,55 @@ class Conll06Dataset(Dataset):
         preprocessed_info_path: path of the preprocessed json file
     """
 
-    def __init__(self, file_path: str, preprocessed_info_path: str, MAX_LEN=150) -> None:
+    def __init__(self, file_path: str, preprocessed: str, pretrained_model_name: str, MAX_LEN: int = 512) -> None:
         self.file_path = file_path
         self.MAX_LEN = MAX_LEN
 
         # read sentences from file
         self.sentences = read_conll06_file(self.file_path)
+        self.preprocessed_dict = load(preprocessed)
+        self.rel_dict = self.preprocessed_dict["rel_labels"]
+        self.n_rels = len(self.rel_dict.keys())
 
-        # get preprocessed vocab and rels
-        pre = load(preprocessed_info_path)
-
-        self.vocab = pre["vocabulary"]
-        self.vocab_size = len(self.vocab.keys())
-
-        # for relation label
-        self.rel_dict = pre["rel_labels"]
-        self.n_rels = len(list(self.rel_dict.keys()))
-
-        # for head
-        self.PAD_IDX_FOR_HEAD = self.MAX_LEN - 1
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
 
     def __len__(self) -> int:
         return len(self.sentences)
 
     def __getitem__(self, idx):
         sentence = self.sentences[idx]
+        sentence_text = "<ROOT>" + \
+            "".join([tok.form for tok in sentence.tokens])
         # endcode sentences
-        encoded = self.__encode_one_sentence(sentence)
+        encoded = self.tokenizer.encode_plus(
+            sentence_text,
+            return_tensors="pt",
+            max_length=512,
+            padding="max_length",
+            return_attention_mask=True,
+            return_token_type_ids=False,
+            truncation=True,
+            add_special_tokens=True
+        )
         # encode the rels and get the heads
         heads, rels = self.__encode_rel_and_get_head(sentence)
 
         return {
-            "sentence": encoded,
+            "input_ids": encoded["input_ids"].flatten(),
+            "attention_mask": encoded["attention_mask"].flatten(),
             "heads": heads,
             "rels": rels
         }
 
     # ============ preprocessing methods ===========
 
-    # encode sentence
-    def __encode_one_sentence(self, sentence: Sentence) -> torch.Tensor:
-        # encode and pad basically
-        # fill with pad tokens by default
-        encoded = torch.ones(
-            self.MAX_LEN, dtype=torch.long) * self.vocab["<PAD>"]
-        # index 0 is always the ROOT
-        encoded[0] = self.vocab["<ROOT>"]
-
-        tokens = sentence.tokens
-        for idx, token in enumerate(tokens):
-            if token.form in self.vocab.keys():
-                encoded[idx + 1] = self.vocab[token.form]
-            else:
-                encoded[idx + 1] = self.vocab["<OOV>"]
-
-        return encoded
-
     # encode labels and get head
     # encode and pad basically
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        heads = torch.ones(self.MAX_LEN, dtype=torch.long) * \
-            self.PAD_IDX_FOR_HEAD
+        heads = torch.ones(self.MAX_LEN, dtype=torch.long) * -1
 
-        rels = torch.ones(self.MAX_LEN, dtype=torch.long) * \
-            self.rel_dict["<PAD>"]
+        rels = torch.ones(self.MAX_LEN, dtype=torch.long) * -1
 
         for _, token in enumerate(sentence.tokens):
             heads[token.head] = token.head
