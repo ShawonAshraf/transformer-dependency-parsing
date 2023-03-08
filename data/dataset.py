@@ -66,13 +66,13 @@ class Conll06Dataset(Dataset):
     # encode and pad basically
     def __encode_rel_and_get_head(self, sentence: Sentence) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        heads = torch.ones(self.MAX_LEN, dtype=torch.long) * -1
+        heads = torch.zeros(self.MAX_LEN, dtype=torch.long)
 
-        rels = torch.ones(self.MAX_LEN, dtype=torch.long) * -1
+        rels = torch.zeros(self.n_rels, dtype=torch.long)
 
         for _, token in enumerate(sentence.tokens):
-            heads[token.head] = token.head
+            heads[token.head] = 1
             rel_idx = self.rel_dict[token.rel]
-            rels[rel_idx] = rel_idx
+            rels[rel_idx] = 1
 
         return heads, rels

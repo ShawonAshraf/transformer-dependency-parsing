@@ -56,7 +56,7 @@ class ParserTransformer(pl.LightningModule):
         self.rel_decoder = MLP(decoder_in, self.hidden, self.n_rels)
 
         # loss function
-        self.criterion = nn.NLLLoss(ignore_index=ignore_index)
+        self.criterion = nn.BCEWithLogitsLoss()
 
     def forward(self, input_ids: torch.Tensor,
                 attention_mask: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -84,7 +84,8 @@ class ParserTransformer(pl.LightningModule):
 
         out1, out2 = self(input_ids, attention_mask)
 
-        loss = self.criterion(out1, heads) + self.criterion(out2, rels)
+        loss = self.criterion(out1, heads.float()) + \
+            self.criterion(out2, rels.float())
 
         return {
             "loss": loss,
@@ -99,14 +100,10 @@ class ParserTransformer(pl.LightningModule):
         heads = batch["heads"]
         rels = batch["rels"]
 
-        heads = rearrange(heads, "bs seq -> bs seq 1")
-        rels = rearrange(rels, "bs seq -> bs seq 1")
-
-        print(rels)
-
         out1, out2 = self(input_ids, attention_mask)
 
-        loss = self.criterion(out1, heads) + self.criterion(out2, rels)
+        loss = self.criterion(out1, heads.float()) + \
+            self.criterion(out2, rels.float())
 
         self.log("validation_loss", loss, prog_bar=True)
 
