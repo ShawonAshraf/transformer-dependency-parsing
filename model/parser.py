@@ -94,7 +94,7 @@ class ParserTransformer(pl.LightningModule):
         loss = self.criterion(out1, heads.float()) + \
             self.criterion(out2, rels.float())
 
-        self.log("loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True)
 
         opt.zero_grad()
         self.manual_backward(loss)
@@ -105,12 +105,7 @@ class ParserTransformer(pl.LightningModule):
         sch = self.lr_schedulers()
         sch.step()
 
-        return {
-            "loss": loss,
-            "log": {
-                "training_loss": loss
-            }
-        }
+        return loss
 
     def validation_step(self, batch, batch_idx):
         input_ids = batch["input_ids"]
