@@ -66,13 +66,17 @@ if __name__ == "__main__":
                               n_rels=trainset.n_rels,
                               ignore_index=trainset.rel_dict["<PAD>"],
                               encoder_pretrained_name=args.model)
+
+    lr_monitor = pl.callbacks.LearningRateMonitor(
+        logging_interval='step')
+
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         accelerator="gpu",
         devices=1,
         precision=args.precision,
-        gradient_clip_val=0.1,
-        val_check_interval=100
+        val_check_interval=100,
+        callbacks=[lr_monitor]
     )
 
     trainer.fit(model, train_loader, dev_loader)
