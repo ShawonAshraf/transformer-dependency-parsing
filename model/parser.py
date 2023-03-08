@@ -38,18 +38,9 @@ class ParserTransformer(pl.LightningModule):
         # encoder gives word embeddings
         self.encoder = AutoModel.from_pretrained(self.encoder_pretrained_name)
 
-        # transformers for alignment
-        self.sentences_head_transformer = None
-        self.relu1 = nn.ReLU()
-
-        self.sentence_rel_transformer = None
-        self.relu2 = nn.ReLU()
-
-        # decoders as classifier
-        # mlp
-
         decoder_in = 384
 
+        # decoders are linear classifiers
         self.head_decoder = nn.Linear(decoder_in, self.n_parser_heads)
 
         self.rel_decoder = nn.Linear(decoder_in, self.n_rels)
