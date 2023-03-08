@@ -66,10 +66,10 @@ class ParserTransformer(pl.LightningModule):
         pooler = encoded.pooler_output
 
         out1 = self.head_decoder(pooler)
-        out1 = F.log_softmax(out1, dim=-1)
+        # out1 = F.log_softmax(out1, dim=-1)
 
         out2 = self.rel_decoder(pooler)
-        out2 = F.log_softmax(out2, dim=-1)
+        # out2 = F.log_softmax(out2, dim=-1)
 
         return out1, out2
 
