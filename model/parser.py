@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.optim as optim
 from transformers import AutoModel
 
-from .mlp import MLP
 
 """
     with default transformer properties
@@ -51,9 +50,9 @@ class ParserTransformer(pl.LightningModule):
 
         decoder_in = 384
 
-        self.head_decoder = MLP(
-            decoder_in, self.hidden, self.n_parser_heads)
-        self.rel_decoder = MLP(decoder_in, self.hidden, self.n_rels)
+        self.head_decoder = nn.Linear(decoder_in, self.n_parser_heads)
+
+        self.rel_decoder = nn.Linear(decoder_in, self.n_rels)
 
         # loss function
         self.criterion = nn.BCEWithLogitsLoss()
